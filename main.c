@@ -40,9 +40,11 @@ void sumaDecimal (){
     char a[256], b[256];
     printf("\t\t\t*** Suma de Decimales ***\n");
     printf("\n Ingrese 1er Número: ");
-    fgets (a, 100, stdin);
+    scanf("%s", a);
+    //fgets (a, 100, stdin);
     printf("\n Ingrese 2do Número: ");
-    fgets (b, 100, stdin);
+    scanf("%s", b);
+    //fgets (b, 100, stdin);
     sum = atof(a) + atof(b);
     printf("\n %s + %s = %f \n", a,b,sum);
 }
