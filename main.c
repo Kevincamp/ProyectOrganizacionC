@@ -10,6 +10,7 @@
 #include <stdlib.h>
 void sumaDecimal();
 void anadirNumero();
+void limpiarBuffer();
 void mostrarResultado();
 
 struct numero
@@ -18,7 +19,7 @@ struct numero
     struct numero *sgte;
     
 };
- struct numero *primero, *ultimo;
+struct numero *primero, *ultimo;
 
 void anadirNumero()
 {
@@ -29,7 +30,6 @@ void anadirNumero()
     
     printf("\nNuevo numero:");
     gets(a);
-    limpiarBuffer();
     int compare = strncmp(a," ",1);
     /*Compare si ingresa el enter*/
     if (compare != 0){
@@ -43,6 +43,7 @@ void anadirNumero()
             ultimo->sgte = numero;
             ultimo = numero;
         }
+        limpiarBuffer();
     }
     else{
         mostrarResultado();
