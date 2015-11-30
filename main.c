@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-void sumaHexadecimal(char a, char b);
+void sumaHexadecimal();
 void sumaDecimal();
 
 int main(int argc, const char * argv[]) {
@@ -36,22 +36,31 @@ int main(int argc, const char * argv[]) {
 
 
 void sumaDecimal (){
-    double sum;
-    char a[256], b[256];
+    char a[256];
+    int b = 0 , c = 0;
     printf("\t\t\t*** Suma de Decimales ***\n");
-    printf("\n Ingrese 1er Número: ");
-    scanf("%s", a);
-    //fgets (a, 100, stdin);
-    printf("\n Ingrese 2do Número: ");
-    scanf("%s", b);
-    //fgets (b, 100, stdin);
-    sum = atof(a) + atof(b);
-    printf("\n %s + %s = %f \n", a,b,sum);
+    while(c == 0)
+    {
+        gets(a);
+        if(a!=""){
+            b = atoi(a) + b;
+            c = 0;
+        }
+        else{
+            c = 1;
+        }
+    }
+    printf("La sumatoria es %i", &b);
 }
 
-void sumaHexadecimal(char a, char b){
-    
-}
+/*void sumaHexadecimal(){
+    char a[256], b[256], result[256];
+    printf("\t\t\t*** Suma de Hexadecimales ***\n");
+    printf("\n Ingrese 1er Número: ");
+    scanf("%s", a);
+    printf("\n Ingrese 2do Número: ");
+    scanf("%s", b);
+}*/
 
 
 
