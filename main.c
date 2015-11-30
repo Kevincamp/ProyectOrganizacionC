@@ -8,8 +8,64 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-void sumaHexadecimal();
 void sumaDecimal();
+void anadirNumero();
+void mostrarResultado();
+
+struct numero
+{
+    int num;
+    struct numero *sgte;
+    
+};
+ struct numero *primero, *ultimo;
+
+void anadirNumero()
+{
+    char a[256];
+    struct numero *numero;
+    numero = (struct numero *)malloc(sizeof(struct numero));
+    if (numero == NULL){printf("No hay memoria disponible");}
+    
+    printf("\nNuevo numero:"); fflush(stdout);
+    gets(a);
+    int compare = strncmp(a," ",1);
+    /*Compare si ingresa el enter*/
+    if (compare != 0){
+        numero->num = atoi(a);
+        numero->sgte = NULL;
+        
+        if(primero == NULL){
+            primero = numero;
+            ultimo = numero;
+        }else{
+            ultimo->sgte = numero;
+            ultimo = numero;
+        }
+    }
+    else{
+        mostrarResultado();
+    }
+}
+
+void mostrarResultado(){
+    struct numero *auxiliar;
+    int i, sum = 0;
+    i = 0;
+    
+    auxiliar = primero;
+    while(auxiliar == NULL){
+        sum = sum + auxiliar->num;
+        auxiliar = auxiliar->sgte;
+        i++;
+    }
+    if (i == 0) {
+        printf("\nLa lista esta vacia!!.\n");
+    }
+    else {
+        printf("el total es: %d", sum);
+    }
+}
 
 int main(int argc, const char * argv[]) {
     int seleccion;
@@ -29,38 +85,10 @@ int main(int argc, const char * argv[]) {
         }while (seleccion !=1 && seleccion !=2 && seleccion !=3 && seleccion !=4);
         
         if(seleccion == 1){ /* Sumatoria Decimales*/
-            sumaDecimal();
+            anadirNumero();
         }
     }while (seleccion !=4);
 }
-
-
-void sumaDecimal (){
-    char a[256];
-    int b = 0 , c = 0;
-    printf("\t\t\t*** Suma de Decimales ***\n");
-    while(c == 0)
-    {
-        gets(a);
-        if(a!=""){
-            b = atoi(a) + b;
-            c = 0;
-        }
-        else{
-            c = 1;
-        }
-    }
-    printf("La sumatoria es %i", &b);
-}
-
-/*void sumaHexadecimal(){
-    char a[256], b[256], result[256];
-    printf("\t\t\t*** Suma de Hexadecimales ***\n");
-    printf("\n Ingrese 1er Número: ");
-    scanf("%s", a);
-    printf("\n Ingrese 2do Número: ");
-    scanf("%s", b);
-}*/
 
 
 
