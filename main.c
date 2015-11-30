@@ -27,8 +27,9 @@ void anadirNumero()
     numero = (struct numero *)malloc(sizeof(struct numero));
     if (numero == NULL){printf("No hay memoria disponible");}
     
-    printf("\nNuevo numero:"); fflush(stdout);
+    printf("\nNuevo numero:");
     gets(a);
+    limpiarBuffer();
     int compare = strncmp(a," ",1);
     /*Compare si ingresa el enter*/
     if (compare != 0){
@@ -67,6 +68,11 @@ void mostrarResultado(){
     }
 }
 
+void limpiarBuffer(){
+    while(getchar()!='\n')
+        getchar();
+}
+
 int main(int argc, const char * argv[]) {
     int seleccion;
     do{
@@ -82,6 +88,7 @@ int main(int argc, const char * argv[]) {
             printf("\t 4. Salir.\n");
             printf("Escriba su opción:\n");
             scanf("%i",&seleccion);
+            limpiarBuffer();
         }while (seleccion !=1 && seleccion !=2 && seleccion !=3 && seleccion !=4);
         
         if(seleccion == 1){ /* Sumatoria Decimales*/
