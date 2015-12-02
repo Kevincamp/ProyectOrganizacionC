@@ -13,11 +13,13 @@ optres: 	.asciiz "3. Sumar números decimales o hexadecimales\n"
 salir:		.asciiz "4. Salir\n"
 menuTitulo: 	.asciiz "Escoga una opcion: \n"
 errorOp:	.asciiz "*** Opcion incorrecta ***\n"
-salida:		.asciiz "El programa ha terminado"
+salida:		.asciiz "El programa ha terminado\n"
 
 pedirNumero:	.asciiz "Ingrece un numero: "
 buffer:		.space  20 #space para leer un numero
-
+errorDato:	.asciiz "Dato incorrecto\n"
+bien:		.asciiz "bien\n"
+ 
 
 .text
 main:	la $a0, saludo		# Imprimir el saludo usando syscall 4
@@ -57,7 +59,7 @@ Case1:	addi $s0, $zero, 1	#t0 = 1
 	li $v0, 4
 	syscall
 	
-leerNumero:
+	Case1_leerNumero:
 	la $a0, pedirNumero	# Imprimir: Ingrese un numero
 	li $v0, 4
 	syscall
@@ -68,10 +70,33 @@ leerNumero:
     	syscall
 	
 	la $a0, buffer  #pasar direccion de buffer
-	jal compararSaltoLinea  #llamar compara cadena Vacia, si es vacia retorna
-	add $t3, $zero, $v0  #copiar el resultado a $t3
+	jal compararSaltoLinea  #llamar compara si es un salto de linea
+	add $t1, $zero, $v0  #copiar el resultado a $t1
+	bne $t1, $zero, Case1_Sumar # si es igual a 1, se pasa a sumar los numeros
 	
-	beq $t3, $zero, leerNumero 
+	la $a0, buffer #pasar la direccion del buffer a $a0
+	jal esNumeroDecimal  #compruebo si el numero es decimal
+	bne $v0, $zero, Case1_Guardar #si es uno, se guarda ese numero
+	
+	#si no es uno, mostrar error y pedir otro numero
+	la $a0, errorDato
+	li $v0, 4
+	syscall
+	j Case1_leerNumero #pedir otro numero
+	
+	Case1_Guardar:
+	la $a0, bien
+	li $v0, 4
+	syscall
+	# guardar el numero
+	
+	j Case1_leerNumero #pedir otro numero
+	
+	
+	Case1_Sumar: #si se ingresa un salto de linea se suman los numeros
+	la $a0, bien
+	li $v0, 4
+	syscall
 	
 	j Menu			#regresar al Menu
 	
@@ -117,8 +142,8 @@ compararSaltoLinea: #Esta funcion recibe una cadena y si es igual al salto de li
 
 	lb $t1 ($t0)  #load byte
 	
-	addi $t4, $zero, 10
-	bne $t1, $t4, novacio
+	addi $t2, $zero, 10
+	bne $t1, $t2, novacio
 	addi $v0, $zero, 1 #v0 = 1 es igual a la cadena vacia
 	jr $ra #regresar al programa principal
 
@@ -129,6 +154,57 @@ compararSaltoLinea: #Esta funcion recibe una cadena y si es igual al salto de li
 
 
 
+esNumeroDecimal: #esta funcion recibe una cadena y retorn 1 si es un numero decimal y un cero no lo es.
+	add $t0, $a0, $zero #copia el puntero al string
+	
+	loop_esNumeroDecimal:
+	
+	lb $t1($t0)
+	
+	addi $t2, $zero, 10 # 10 es el salto de linea
+	
+	beq $t1, $t2, end_esNumeroDecimal #llega al final del arreglo, es decir hasta el salto de linea
+	
+	#llamar a la funcion esDigitoDecimal
+	addi $sp, $zero, -8 #reservar espacio para dos items
+	sw $t0, 4($sp) #guardo el temporal en la pila
+	sw $ra, 0($sp) #guardo la direccion de retorno
+	
+	add $a0, $zero, $t1
+	jal esDigitoDecimal
+	
+	lw $ra, 0($sp) #recuperar direccion de retorno
+	lw $t0, 4($sp) #recuperar temporal 0
+	addi $sp, $sp, 8 #ajustar el tope de la pila
+	
+	
+	beq $v0, $zero, fail_numeroDecimal
+	addi $t0, $t0, 1 #continua con el siguiente byte
+	j loop_esNumeroDecimal
+	
+	
+	end_esNumeroDecimal: #si es decimal
+	addi $v0, $zero, 1
+	jr $ra
+	
+	fail_numeroDecimal:
+	add $v0,$zero, $zero
+	jr $ra
+	
 
-
+esDigitoDecimal: #Esta funcion recibe un caracter (1 byte) y retorna 1 si es un digito (0 - 9) y 0 si no lo es
+	
+	slti $t0, $a0, 48 #si $a0 es menor que 48 retornar 0
+	
+	bne $t0, $zero, noDigitoDecimal # si $a0 < 48 y no es digito
+	
+	slti $t0, $a0, 58 #si $a < 58 retornar 0
+	beq $t0, $zero, noDigitoDecimal #si no es igual a cero es mayor que 58, no es digito
+	
+	addi $v0, $zero, 1 # si es digito, retorna 1
+	jr $ra
+	
+	noDigitoDecimal:   
+	add $v0, $zero, $zero #no es digito decimal retorna 0
+	jr $ra
 	
