@@ -88,6 +88,11 @@ Case1:	addi $s0, $zero, 1	#t0 = 1
 	la $a0, bien
 	li $v0, 4
 	syscall
+	la $a0,buffer
+	jal stringDecimal
+	add $a0,$zero,$v0
+	li $v0, 1
+	syscall
 	# guardar el numero
 	
 	j Case1_leerNumero #pedir otro numero
@@ -166,7 +171,7 @@ esNumeroDecimal: #esta funcion recibe una cadena y retorn 1 si es un numero deci
 	beq $t1, $t2, end_esNumeroDecimal #llega al final del arreglo, es decir hasta el salto de linea
 	
 	#llamar a la funcion esDigitoDecimal
-	addi $sp, $zero, -8 #reservar espacio para dos items
+	addi $sp, $sp, -8 #reservar espacio para dos items
 	sw $t0, 4($sp) #guardo el temporal en la pila
 	sw $ra, 0($sp) #guardo la direccion de retorno
 	
@@ -206,5 +211,36 @@ esDigitoDecimal: #Esta funcion recibe un caracter (1 byte) y retorna 1 si es un 
 	
 	noDigitoDecimal:   
 	add $v0, $zero, $zero #no es digito decimal retorna 0
+	jr $ra
+
+stringDecimal:#esta funcion recibe una cadena de caracter y retorna la cadena trasformada en numero
+	add $t0, $a0,$zero # $t0=string
+	addi $sp,$sp,-4 # desplazo la pila
+	sw $sp,0($ra) # guardo la direccion del programa que me llamo
+	jal contarDigitos
+	addi $sp,$sp,4 #regreso al valor anterior de la pila
+	lw $ra,0($sp) #obtengo la direccion del programa que me llamo
+	add $t2,$zero,$v0 # i=numCaracteres
+	addi $t4,$zero,10 #registro para verificar el enter
+	add $t3,$zero,$zero
+	add $v0,$zero,$zero # se inicializa la variable que contendra el numero,result=0
+	loop_StringDecimal: 	lw $t1,0($t0) #cargo 1 byte en $t1, $t1=*String
+		addi $t0,$t0,1 #desplaso el puntero de t0 al siguiente byte, String++
+		beq $t1,$t4,exit_StringDecimal #si el byte es igual al entre terminar la funcion
+		subi $t1,$t1,-48
+		add $v0,$v0,$t1
+	exit_StringDecimal:
+	jr $ra
+	
+contarDigitos: #esta funcion recibe la cadena de numero y retorna el numero de digitos que tiene
+	add $t0, $a0,$zero # $t0=string
+	addi $t4,$zero,10 #registro para verificar el enter
+	add $t3,$zero,$zero
+	add $v0,$zero,$zero # se inicializa la variable que contendra el numero,result=0
+	loop_contarDigito: 	lw $t1,0($t0) #cargo 1 byte en $t1, $t1=*String
+		addi $t0,$t0,1 #desplaso el puntero de t0 al siguiente byte, String++
+		beq $t1,$t4,exit_contarDigito #si el byte es igual al entre terminar la funcion
+		addi $v0,$v0,1 # result++
+	exit_contarDigito:
 	jr $ra
 	
