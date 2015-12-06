@@ -7,7 +7,7 @@
 
 		.data
 saludo: 	.asciiz "Proyecto de 1er Parcial de Organización y Arquitectura de Computadores:\n\n"
-opuno: 		.asciiz "1. Sumar números decimales\n"
+opuno: 		.asciiz "\n1. Sumar números decimales\n"
 opdos: 		.asciiz "2. Sumar números hexadecimales\n"
 optres: 	.asciiz "3. Sumar números decimales o hexadecimales\n"
 salir:		.asciiz "4. Salir\n"
@@ -15,12 +15,15 @@ menuTitulo: 	.asciiz "Escoga una opcion: \n"
 errorOp:	.asciiz "*** Opcion incorrecta ***\n"
 salida:		.asciiz "El programa ha terminado\n"
 
-pedirNumero:	.asciiz "Ingrece un numero: "
+pedirNumero:	.asciiz "\nIngrese un numero: "
 buffer:		.space  20 #space para leer un numero
 errorDato:	.asciiz "Dato incorrecto\n"
 bien:		.asciiz "bien\n"
- 
-
+numdigitos:	.asciiz "\nnumero Digitos: "
+exponente:	.asciiz "\nexponente: "
+numero:		.asciiz "\nNumero: "
+acumulado:	.asciiz "\nLa Suma es: "
+msgpow:		.asciiz "\npow: "
 .text
 main:	la $a0, saludo		# Imprimir el saludo usando syscall 4
 	li $v0, 4
@@ -54,7 +57,7 @@ Menu:	la $a0, opuno		# Imprimir la opcion uno del menu usando syscall 4
 	
 Case1:	addi $s0, $zero, 1	#t0 = 1
 	bne $s1, $s0, Case2	# si $t1 no es igual a 1 saltar al Case2
-	
+	add $s2,$zero,$zero   	#$s2=0, acu=0
 	la $a0, opuno		# Imprimir la opcion uno del menu usando syscall 4
 	li $v0, 4
 	syscall
@@ -90,17 +93,17 @@ Case1:	addi $s0, $zero, 1	#t0 = 1
 	syscall
 	la $a0,buffer
 	jal stringDecimal
-	add $a0,$zero,$v0
-	li $v0, 1
-	syscall
-	# guardar el numero
-	
+	# acumular el numero
+	add $s2,$s2,$v0
 	j Case1_leerNumero #pedir otro numero
 	
 	
 	Case1_Sumar: #si se ingresa un salto de linea se suman los numeros
-	la $a0, bien
+	la $a0, acumulado
 	li $v0, 4
+	syscall
+	add $a0,$s2,$zero
+	li $v0, 1
 	syscall
 	
 	j Menu			#regresar al Menu
@@ -215,32 +218,86 @@ esDigitoDecimal: #Esta funcion recibe un caracter (1 byte) y retorna 1 si es un 
 
 stringDecimal:#esta funcion recibe una cadena de caracter y retorna la cadena trasformada en numero
 	add $t0, $a0,$zero # $t0=string
-	addi $sp,$sp,-4 # desplazo la pila
-	sw $sp,0($ra) # guardo la direccion del programa que me llamo
+	addi $sp,$sp,-8 # desplazo la pila
+	sw $ra,0($sp) # guardo la direccion del programa que me llamo
+	sw $t0,4($sp) #guardo el string del numero
 	jal contarDigitos
-	addi $sp,$sp,4 #regreso al valor anterior de la pila
-	lw $ra,0($sp) #obtengo la direccion del programa que me llamo
 	add $t2,$zero,$v0 # i=numCaracteres
+	lw $ra,0($sp) #obtengo la direccion del programa que me llamo
+	lw $t0,4($sp)
+	addi $sp,$sp,8 #regreso al valor anterior de la pila
 	addi $t4,$zero,10 #registro para verificar el enter
-	add $t3,$zero,$zero
-	add $v0,$zero,$zero # se inicializa la variable que contendra el numero,result=0
-	loop_StringDecimal: 	lw $t1,0($t0) #cargo 1 byte en $t1, $t1=*String
+	add $t3,$zero,$zero # se inicializa la variable que contendra el numero,result=0
+	subi $t2,$t2,1 #i--
+	loop_StringDecimal: 	
+		lb $t1,0($t0) #cargo 1 byte en $t1, $t1=*String
 		addi $t0,$t0,1 #desplaso el puntero de t0 al siguiente byte, String++
 		beq $t1,$t4,exit_StringDecimal #si el byte es igual al entre terminar la funcion
-		subi $t1,$t1,-48
-		add $v0,$v0,$t1
+		addi $a0,$zero,10 #primer argumento de pow
+		add $a1,$zero,$t2 # segundo argumento de pow
+		addi $sp,$sp,-24 #despazo el stack
+		sw $ra,0($sp) #guardamos la direccion de la funcion que me llamo
+		sw $t0,4($sp) # guardamos el t0
+		sw $t1,8($sp) #guardamos el t1
+		sw $t2,12($sp) #guardamos el t2
+		sw $t3,16($sp) #guardamos el t3
+		sw $t4,20($sp) #guardamos el t4
+		jal pow # llamo a la funcion para calcular 10^i
+		lw $ra,0($sp) #recupero la direccion de la funcion que me llamo
+		lw $t0,4($sp) #recupero t0
+		lw $t1,8($sp) #recupero t1
+		lw $t2,12($sp) #recupero t2
+		lw $t3,16($sp) #recupero t3
+		lw $t4,20($sp) #recupero t4
+		addi $sp,$sp,24 # regreso el stack
+		subi $t1,$t1,48 #obtenego el equivalente entero del numero
+		add $t5,$zero,$v0 #guardo el 10^i en $t5
+		mul $t5,$t5,$t1
+		mflo $t5
+		add $t3,$t3,$t5 # result=result +n*10^i
+		subi $t2,$t2,1 # i--
+		j loop_StringDecimal
 	exit_StringDecimal:
+	#imprimo el mensaje digito
+	la $a0,numero
+	li $v0, 4
+	syscall
+	#imprimo el numero
+	add $a0,$zero,$t3
+	addi $v0,$zero,1
+	syscall
+	add $v0,$zero,$t3
 	jr $ra
 	
 contarDigitos: #esta funcion recibe la cadena de numero y retorna el numero de digitos que tiene
 	add $t0, $a0,$zero # $t0=string
 	addi $t4,$zero,10 #registro para verificar el enter
 	add $t3,$zero,$zero
-	add $v0,$zero,$zero # se inicializa la variable que contendra el numero,result=0
-	loop_contarDigito: 	lw $t1,0($t0) #cargo 1 byte en $t1, $t1=*String
-		addi $t0,$t0,1 #desplaso el puntero de t0 al siguiente byte, String++
+	add $t5,$zero,$zero # se inicializa la variable que contendra el numero,result=0
+	loop_contarDigito: 	lb $t1,0($t0) #cargo 1 byte en $t1, $t1=*String
+		addi $t0,$t0,1 #desplazo el puntero de t0 al siguiente byte, String++
 		beq $t1,$t4,exit_contarDigito #si el byte es igual al entre terminar la funcion
-		addi $v0,$v0,1 # result++
+		addi $t5,$t5,1 # result++
+		j loop_contarDigito
 	exit_contarDigito:
+	add $v0,$zero,$t5
 	jr $ra
+
+pow: # esta funcion retorna a0^a1
+	add $t0,$zero,$a0
+	add $t1,$zero,$a1
+	addi $t2,$zero,1
+	loop_pow:slt $t3, $zero,$t1 # $a1 > 0 - 1
+		beq $t3,$zero,exit_pow # si a1 
+		mul $t2,$t2,$t0
+		mflo $t2
+		subi $t1,$t1,1
+		j loop_pow
+	exit_pow:
+	add $v0,$zero,$t2
+	jr $ra
+	
+	
+	
+	
 	
