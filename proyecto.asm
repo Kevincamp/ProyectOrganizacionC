@@ -111,9 +111,39 @@ Case1:	addi $s0, $zero, 1	#t0 = 1
 	
 Case2:	addi $s0, $zero, 2	#t0 = 2
 	bne $s1, $s0, Case3	# si $t1 no es igual a 2 saltar al Case3
-	
+	add $s2, $zero,$zero 	#s2 = 0, acu = 0 
 	la $a0, opdos		# Imprimir la opcion dos del menu usando syscall 4
 	li $v0, 4
+	syscall
+	
+	Case2_leerNumero:
+	la $a0, pedirNumero 	#Se imprime: Ingrese un numero
+	li $v0, 4
+	syscall
+	
+	li $v0, 8		# leer string usando syscall 8
+	la $a0, buffer		# guarda el string en un buffer
+	li $a1, 20		# se configura el tamano del buffer
+	syscall
+	
+	la $a0, buffer 		# pasar la direccion del buffer
+	jal compararSaltoLinea	# llamar a comparar si es un salto de linea
+	add $t1, $zero, $v0	# copia el resultado a $t1
+	#bne $t1, $zero, Case2_Sumar	# Si es igual a 1, se pasa a sumar los numeros
+	
+	la $a0, buffer		# pasar la direccion del buffer a $a0
+	jal esNumeroHexadecimal	# compruebo si el numero es hexadecimal
+	#bne  $v0, $zero, Case2_Guardar # si es uno, se guarda ese numero
+	
+	#si no es uno, mostrar error y pedir otro numero
+	la $a0, errorDato
+	li $v0, 4
+	syscall
+	j Case2_leerNumero 	# pedir otro numero
+	
+	Case2_Guardar:
+	la $a0, bien
+	li $v0,4
 	syscall
 	
 	j Menu			#regresar al Menu
@@ -206,7 +236,7 @@ esDigitoDecimal: #Esta funcion recibe un caracter (1 byte) y retorna 1 si es un 
 	
 	bne $t0, $zero, noDigitoDecimal # si $a0 < 48 y no es digito
 	
-	slti $t0, $a0, 58 #si $a < 58 retornar 0
+	slti $t0, $a0, 57 #si $a < 58 retornar 0
 	beq $t0, $zero, noDigitoDecimal #si no es igual a cero es mayor que 58, no es digito
 	
 	addi $v0, $zero, 1 # si es digito, retorna 1
@@ -297,24 +327,47 @@ pow: # esta funcion retorna a0^a1
 	add $v0,$zero,$t2
 	jr $ra
 	
-#esNumeroHexadecimal: # #esta funcion recibe una cadena y retorn 1 si es un numero hexadecimal y un cero no lo es.
-#	add $t0, $a0 ,$zero # copio el puntero al string
+esNumeroHexadecimal: # #esta funcion recibe una cadena y retorn 1 si es un numero hexadecimal y un cero no lo es.
+	add $t0, $a0 ,$zero # copio el puntero al string
 	
-#	loop_esHexadecimal:
-#	lb $t1($t0)
+	loop_esNumeroHexadecimal:
+	lb $t1($t0)
 	
-#	addi $t2, $zero,10 # 10 es el salto de linea
+	addi $t2, $zero,10 # 10 es el salto de linea
 	
-#	beq $t1, $t2 , end_esNumeroHexadecimal # llega al final del arreglo, es decir hasta el salto de linea
+	beq $t1, $t2 , end_esNumeroHexadecimal # llega al final del arreglo, es decir hasta el salto de linea
 	
 	#llamar a la funcion esHexadecimal
+	addi $sp, $sp, -8 # reservo el espacio para dos items
+	sw $t0, 4($sp) # guardo el temporal en una pila
+	sw $ra, 0($sp) # guardo la direccion de retorno
+	
+	add $a0, $zero, $t1
+	jal esCaracterHexadecimal
+	
+	lw $ra, 0($sp) # recupera la direccion de retorno
+	lw $t0, 4($sp) # recupera temporal t0
+	addi $sp, $sp, 8 #ajustar el tope de la pila
+	
+	beq $v0, $zero, fail_numeroHexadecimal
+	addi $t0, $t0, 1 # continua con el siguiente byte
+	j loop_esNumeroHexadecimal
+	
+	end_esNumeroHexadecimal: # si es hexadecimal
+	addi $v0, $zero,1
+	jr $ra
+	
+	fail_numeroHexadecimal:
+	add $v0, $zero, $zero
+	jr $ra
+	
 
 esCaracterHexadecimal: #recibe un caracter y retorna 1 si es una letra (a - f) y 0 si no lo es
 	slti $t0, $a0, 65 #si $a0 es menor que 65 retorna 0
 	
 	bne $t0, $zero, noCaracterHexadecimal # si $a0 < 65 y no es hexadecimal
 	
-	slti $t0, $a0, 71 # si $a0 < 71 retornar 0
+	slti $t0, $a0, 70 # si $a0 < 71 retornar 0
 	beq $t0, $zero, noCaracterHexadecimal # si no es igual a cero es mayor que 71, no es hexadecimal
 	
 	addi $v0, $zero, 1 # si es hexadecimal, retorna 1
