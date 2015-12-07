@@ -297,7 +297,31 @@ pow: # esta funcion retorna a0^a1
 	add $v0,$zero,$t2
 	jr $ra
 	
+#esNumeroHexadecimal: # #esta funcion recibe una cadena y retorn 1 si es un numero hexadecimal y un cero no lo es.
+#	add $t0, $a0 ,$zero # copio el puntero al string
 	
+#	loop_esHexadecimal:
+#	lb $t1($t0)
 	
+#	addi $t2, $zero,10 # 10 es el salto de linea
+	
+#	beq $t1, $t2 , end_esNumeroHexadecimal # llega al final del arreglo, es decir hasta el salto de linea
+	
+	#llamar a la funcion esHexadecimal
+
+esCaracterHexadecimal: #recibe un caracter y retorna 1 si es una letra (a - f) y 0 si no lo es
+	slti $t0, $a0, 65 #si $a0 es menor que 65 retorna 0
+	
+	bne $t0, $zero, noCaracterHexadecimal # si $a0 < 65 y no es hexadecimal
+	
+	slti $t0, $a0, 71 # si $a0 < 71 retornar 0
+	beq $t0, $zero, noCaracterHexadecimal # si no es igual a cero es mayor que 71, no es hexadecimal
+	
+	addi $v0, $zero, 1 # si es hexadecimal, retorna 1
+	jr $ra
+	
+	noCaracterHexadecimal:
+	add $v0,$zero,$zero
+	jr $ra 
 	
 	
