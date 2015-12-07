@@ -363,18 +363,18 @@ esNumeroHexadecimal: # #esta funcion recibe una cadena y retorn 1 si es un numer
 	
 
 esCaracterHexadecimal: #recibe un caracter y retorna 1 si es una letra (a - f) y 0 si no lo es
-	slti $t0, $a0, 65 #si $a0 es menor que 65 retorna 0
+	slti $t0, $a0, 97 #si $a0 es menor que 97 retorna 0
 	
 	bne $t0, $zero, noCaracterHexadecimal # si $a0 < 65 y no es hexadecimal
 	
-	slti $t0, $a0, 70 # si $a0 < 71 retornar 0
+	slti $t0, $a0, 102 # si $a0 < 102 retornar 0
 	beq $t0, $zero, noCaracterHexadecimal # si no es igual a cero es mayor que 71, no es hexadecimal
 	
 	addi $v0, $zero, 1 # si es hexadecimal, retorna 1
 	jr $ra
 	
 	noCaracterHexadecimal:
-	add $v0,$zero,$zero
+	add $v0, $zero, $zero
 	jr $ra 
 	
 	
