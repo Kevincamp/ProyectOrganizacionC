@@ -19,8 +19,8 @@ pedirNumero:	.asciiz "\nIngrese un numero: "
 pedirHex:	.asciiz "\nIngrese un numero Hexadecimal (letras en minuscula): "
 pedirHexDec:	.asciiz "\nIngrese un numero (hexadecimales empiezan con 0x): "
 buffer:		.space  20 #space para leer un numero
-errorDato:	.asciiz "Dato incorrecto\n"
-bien:		.asciiz "bien\n"
+errorDato:	.asciiz "\nDato incorrecto"
+bien:		.asciiz "\nbien"
 numdigitos:	.asciiz "\nnumero Digitos: "
 exponente:	.asciiz "\nexponente: "
 numero:		.asciiz "\nNumero: "
@@ -56,6 +56,8 @@ Menu:	la $a0, opuno		# Imprimir la opcion uno del menu usando syscall 4
 	syscall
 	
 	add $s1, $v0, $zero	#copy the opcion in $t1
+	jal esNumeroDecimal
+	bne $v0, $zero, Default
 	
 Case1:	addi $s0, $zero, 1	#t0 = 1
 	bne $s1, $s0, Case2	# si $t1 no es igual a 1 saltar al Case2
@@ -90,9 +92,9 @@ Case1:	addi $s0, $zero, 1	#t0 = 1
 	j Case1_leerNumero #pedir otro numero
 	
 	Case1_Guardar:
-	la $a0, bien
-	li $v0, 4
-	syscall
+	#la $a0, bien
+	#li $v0, 4
+	#syscall
 	la $a0,buffer
 	jal stringDecimal
 	# acumular el numero
@@ -377,9 +379,9 @@ stringDecimal:#esta funcion recibe una cadena de caracter y retorna la cadena tr
 		j loop_StringDecimal
 	exit_StringDecimal:
 	#imprimo el mensaje digito
-	la $a0,numero
-	li $v0, 4
-	syscall
+	#la $a0,numero
+	#li $v0, 4
+	#syscall
 	#imprimo el numero
 	add $a0,$zero,$t3
 	addi $v0,$zero,1
@@ -549,9 +551,9 @@ stringHexadecimal:#esta funcion recibe una cadena de caracteres (formato hexadec
 		
 	exit_StringHexadecimal:
 	#imprimo el mensaje digito
-	la $a0,numero
-	li $v0, 4
-	syscall
+	#la $a0,numero
+	#li $v0, 4
+	#syscall
 	#imprimo el numero
 	add $a0,$zero,$t3
 	addi $v0,$zero,1
@@ -577,8 +579,4 @@ comienza_con_0x: #devuelve 1 si la cadena empieza con "0x"y 0 caso contrario
 	no_comienza_con_0x:
 	add $v0, $zero, $zero
 	jr $ra 
-	
-
-	
-	
 
