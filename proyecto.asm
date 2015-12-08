@@ -486,3 +486,37 @@ stringHexadecimal:#esta funcion recibe una cadena de caracteres (formato hexadec
 	jr $ra	
 
 
+
+esCaraterX: 				# recibe un caracter y retorna 1 si es un letra x y 0 si no lo es
+	slti $t0, $a0 , 120 		# si es menor que 120 retorna 0
+	
+	bne $t0, $zero , noCaracterX 	# si $a0 <= 120, no es inicio hexadecimal
+	
+	slti $t0, $a0,121		# si es mayor igual a 121, no es hexadecimal
+	beq $t0, $zero, noCaracterX	# si no es igual a cero es mayor que 121 y no es inicio hexadecimal
+	
+	addi $v0, $zero,1 		# si es hexadecimal, retorna 1
+	jr $ra
+	
+	noCaracterX:
+	add $v0, $zero, $zero
+	jr $ra
+
+esCaracterZero:				# recibe un caracter y retorna 1 si es igual a cero y 0 si no lo es
+	slti $t0 , $a0, 48		# si $a0 es menor que 48 retorna 0
+	
+	bne $t0, $zero, noCaracterZero	# si $a0 < 48, no es inicio hexadecimal
+	
+	slti $t0, $a0, 49		# si es mayor igual a 49, no es hexadecimal
+	beq $t0, $zero, noCaracterZero	# si no es igual a cero y mayor que 49, no es inicio de hexadecimal
+	
+	addi $v0, $zero, 1
+	jr $ra
+	
+	noCaracterZero:
+	add $v0, $zero, $zero
+	jr $ra
+	
+	
+	
+
