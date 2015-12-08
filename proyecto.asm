@@ -129,7 +129,7 @@ Case2:	addi $s0, $zero, 2	#s0 = 2
 	la $a0, buffer 		# pasar la direccion del buffer
 	jal compararSaltoLinea	# llamar a comparar si es un salto de linea
 	add $t1, $zero, $v0	# copia el resultado a $t1
-	#bne $t1, $zero, Case2_Sumar	# Si es igual a 1, se pasa a sumar los numeros
+	bne $t1, $zero, Case2_Sumar	# Si es igual a 1, se pasa a sumar los numeros
 	
 	la $a0, buffer		# pasar la direccion del buffer a $a0
 	jal esNumeroHexadecimal	# compruebo si el numero es hexadecimal
@@ -144,6 +144,20 @@ Case2:	addi $s0, $zero, 2	#s0 = 2
 	Case2_Guardar:
 	la $a0, bien
 	li $v0,4
+	syscall
+	la $a0,buffer
+	jal stringHexadecimal
+	# acumular el numero
+	add $s2,$s2,$v0
+	j Case2_leerNumero #pedir otro numero
+	
+	
+	Case2_Sumar: #si se ingresa un salto de linea se suman los numeros
+	la $a0, acumulado
+	li $v0, 4
+	syscall
+	add $a0,$s2,$zero
+	li $v0, 1
 	syscall
 	
 	j Menu			#regresar al Menu
@@ -391,5 +405,84 @@ esCaracterHexadecimal: #recibe un caracter y retorna 1 si es una letra (a - f) y
 	noCaracterHexadecimal:
 	add $v0, $zero, $zero
 	jr $ra 
+
 	
-	
+stringHexadecimal:#esta funcion recibe una cadena de caracteres (formato hexadecimal) y retorna la cadena trasformada en numero decimal
+	add $t0, $a0,$zero # $t0=string
+	addi $sp,$sp,-8 # desplazo la pila
+	sw $ra,0($sp) # guardo la direccion del programa que me llamo
+	sw $t0,4($sp) #guardo el string del numero
+	jal contarDigitos
+	add $t2,$zero,$v0 # i=numCaracteres ent $t2
+	lw $ra,0($sp) #obtengo la direccion del programa que me llamo
+	lw $t0,4($sp)
+	addi $sp,$sp,8 #regreso al valor anterior de la pila
+	addi $t4,$zero,10 #registro para verificar el enter
+	add $t3,$zero,$zero # se inicializa la variable que contendra el numero,result = 0
+	subi $t2,$t2,1 #i - -
+	loop_StringHexdecimal: 	
+		lb $t1,0($t0) #cargo 1 byte en $t1, $t1=*String
+		addi $t0,$t0,1 #desplaso el puntero de t0 al siguiente byte, String++
+		beq $t1,$t4,exit_StringHexadecimal #si el byte es igual al enter terminar la funcion
+		addi $a0,$zero,16 #primer argumento de pow, base 16
+		add $a1,$zero,$t2 # segundo argumento de pow, i
+		addi $sp,$sp,-24 #despazo el stack
+		sw $ra,0($sp) #guardamos la direccion de la funcion que me llamo
+		sw $t0,4($sp) # guardamos el t0
+		sw $t1,8($sp) #guardamos el t1
+		sw $t2,12($sp) #guardamos el t2
+		sw $t3,16($sp) #guardamos el t3
+		sw $t4,20($sp) #guardamos el t4
+		jal pow # llamo a la funcion para calcular 10^i
+		add $t5, $zero, $v0 #copio el resultado en $t5
+		
+		lw $ra,0($sp) #recupero la direccion de la funcion que me llamo
+		lw $t0,4($sp) #recupero t0
+		lw $t1,8($sp) #recupero t1
+		lw $t2,12($sp) #recupero t2
+		lw $t3,16($sp) #recupero t3
+		lw $t4,20($sp) #recupero t4
+		addi $sp,$sp,24 # regreso el stack
+		
+		#debo preuntar si es decimal el numero, llamando a la funcion es digito
+		addi $sp, $sp, -8 # reservo el espacio para dos items
+		sw $t0, 4($sp) # guardo el temporal en una pila
+		sw $ra, 0($sp) # guardo la direccion de retorno
+		add $a0, $zero, $t1
+		jal esDigitoDecimal
+		lw $ra, 0($sp) # recupera la direccion de retorno
+		lw $t0, 4($sp) # recupera temporal t0
+		addi $sp, $sp, 8 #ajustar el tope de la pila
+		beq $v0, $zero, convertHexadecimal #si no es decimal, entonces debe ser hexadecimal
+		
+		subi $t1,$t1,48 #obtenego el equivalente entero del numero
+		mul $t5,$t5,$t1 # multiplico $t1 por 10 ^ i
+		mflo $t5
+		add $t3,$t3,$t5 # result=result +n*10^i
+		subi $t2,$t2,1 # i--
+		j loop_StringHexdecimal
+		
+		#convertir letras hexadecimales de (a-f) a numeros
+		convertHexadecimal:
+		subi $t6, $t1, 97  # resto 97, que es el valor de a
+		addi $t1, $t6, 10  # sumo 10 a la diferencia anterior 
+		mul $t5,$t5,$t1 # multiplico $t1 por 10 ^ i
+		mflo $t5
+		add $t3,$t3,$t5 # result=result +n*10^i
+		subi $t2,$t2,1 # i--
+		j loop_StringHexdecimal
+		
+		
+	exit_StringHexadecimal:
+	#imprimo el mensaje digito
+	la $a0,numero
+	li $v0, 4
+	syscall
+	#imprimo el numero
+	add $a0,$zero,$t3
+	addi $v0,$zero,1
+	syscall
+	add $v0,$zero,$t3
+	jr $ra	
+
+
