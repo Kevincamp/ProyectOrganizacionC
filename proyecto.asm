@@ -169,8 +169,80 @@ Case3: 	addi $s0, $zero, 3	#t0 = 3
 	li $v0, 4
 	syscall
 	
-	j Menu			#regresar al Menu
+	Case3_leerNumero:
+	la $a0, pedirNumero 	#Se imprime: Ingrese un numero
+	li $v0, 4
+	syscall
 	
+	li $v0, 8		# leer string usando syscall 8
+	la $a0, buffer		# guarda el string en un buffer
+	li $a1, 20		# se configura el tamano del buffer
+	syscall
+	
+	la $a0, buffer 		# pasar la direccion del buffer
+	jal compararSaltoLinea	# llamar a comparar si es un salto de linea
+	add $t1, $zero, $v0	# copia el resultado a $t1
+	bne $t1, $zero, Case3_Sumar	# Si es igual a 1, se pasa a sumar los numeros
+	
+	#compruebo si el numero es decimal
+	la $a0, buffer		# pasar la direccion del buffer a $a0
+	jal esNumeroDecimal	# compruebo si el numero es hexadecimal
+	bne  $v0, $zero, Case3_Guardar_Decimal # si es uno, se guarda ese numero decimal
+	
+	#comrpuebo si el numero comienza con 0x
+	la $a0, buffer         #pasar la direccion del buffer a $a0
+	jal comienza_con_0x    #compruebo si el string comienza con 0X
+	bne $v0, $zero, Case3_comprobar_Hexadecimal # si el resultado es 1, comienza con 0x y hay que comprobar el resto de la cadena
+	
+	#si no es uno, mostrar error y pedir otro numero
+	la $a0, errorDato
+	li $v0, 4
+	syscall
+	j Case3_leerNumero 	# pedir otro numero
+	
+	Case3_Guardar_Decimal:
+	la $a0, bien
+	li $v0,4
+	syscall
+	la $a0,buffer
+	jal stringDecimal
+	# acumular el numero
+	add $s2,$s2,$v0
+	j Case3_leerNumero #pedir otro numero
+	
+	Case3_comprobar_Hexadecimal:
+	la $a0, buffer         #pasar la direccion del buffer a $a0
+	addi $a0, $a0, 2       #mover el puntero dos posiciones
+	jal esNumeroHexadecimal  #compruebo si el resto de la cadena es hexadecimal
+	bne $v0, $zero, Case3_Guardar_Hexadecimal #si es uno se guarda ese numero hexadecimal
+	#si no es uno, mostrar error y pedir otro numero
+	la $a0, errorDato
+	li $v0, 4
+	syscall
+	j Case3_leerNumero 	# pedir otro numero
+	
+	Case3_Guardar_Hexadecimal:
+	la $a0, bien
+	li $v0,4
+	syscall
+	la $a0,buffer
+	addi $a0, $a0, 2 #muevo el puntero dos posiciones
+	jal stringHexadecimal
+	# acumular el numero
+	add $s2,$s2,$v0
+	j Case3_leerNumero #pedir otro numero
+	
+	
+	Case3_Sumar: #si se ingresa un salto de linea se suman los numeros
+	la $a0, acumulado
+	li $v0, 4
+	syscall
+	add $a0,$s2,$zero
+	li $v0, 1
+	syscall
+	
+	j Menu			#regresar al Menu
+
 
 Salir: 	addi $s0, $zero, 4	#t0 = 4
 	bne $s1, $s0, Default	# si $t1 no es igual a 4 saltar al Default
@@ -486,37 +558,25 @@ stringHexadecimal:#esta funcion recibe una cadena de caracteres (formato hexadec
 	jr $ra	
 
 
-
-esCaraterX: 				# recibe un caracter y retorna 1 si es un letra x y 0 si no lo es
-	slti $t0, $a0 , 120 		# si es menor que 120 retorna 0
+comienza_con_0x: #devuelve 1 si la cadena empieza con "0x"y 0 caso contrario
 	
-	bne $t0, $zero , noCaracterX 	# si $a0 <= 120, no es inicio hexadecimal
+	lb $t0, 0($a0) #cargo el primer caracter
+	addi $t1, $zero, 48 # 48 es cero en ascii
+	bne $t0, $t1, no_comienza_con_0x
 	
-	slti $t0, $a0,121		# si es mayor igual a 121, no es hexadecimal
-	beq $t0, $zero, noCaracterX	# si no es igual a cero es mayor que 121 y no es inicio hexadecimal
-	
-	addi $v0, $zero,1 		# si es hexadecimal, retorna 1
-	jr $ra
-	
-	noCaracterX:
-	add $v0, $zero, $zero
-	jr $ra
-
-esCaracterZero:				# recibe un caracter y retorna 1 si es igual a cero y 0 si no lo es
-	slti $t0 , $a0, 48		# si $a0 es menor que 48 retorna 0
-	
-	bne $t0, $zero, noCaracterZero	# si $a0 < 48, no es inicio hexadecimal
-	
-	slti $t0, $a0, 49		# si es mayor igual a 49, no es hexadecimal
-	beq $t0, $zero, noCaracterZero	# si no es igual a cero y mayor que 49, no es inicio de hexadecimal
+	addi $a0, $a0, 1 #muevo el puntero
+	lb $t0, 0($a0) #cargo el segundo caracter
+	addi $t1, $zero, 120 # 120 es el ascii de la x
+	bne $t0, $t1, no_comienza_con_0x
 	
 	addi $v0, $zero, 1
 	jr $ra
 	
-	noCaracterZero:
+	no_comienza_con_0x:
 	add $v0, $zero, $zero
-	jr $ra
+	jr $ra 
 	
+
 	
 	
 
