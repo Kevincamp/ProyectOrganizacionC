@@ -16,6 +16,8 @@ errorOp:	.asciiz "*** Opcion incorrecta ***\n"
 salida:		.asciiz "El programa ha terminado\n"
 
 pedirNumero:	.asciiz "\nIngrese un numero: "
+pedirHex:	.asciiz "\nIngrese un numero Hexadecimal (letras en minuscula): "
+pedirHexDec:	.asciiz "\nIngrese un numero (hexadecimales empiezan con 0x): "
 buffer:		.space  20 #space para leer un numero
 errorDato:	.asciiz "Dato incorrecto\n"
 bien:		.asciiz "bien\n"
@@ -117,7 +119,7 @@ Case2:	addi $s0, $zero, 2	#s0 = 2
 	syscall
 	
 	Case2_leerNumero:
-	la $a0, pedirNumero 	#Se imprime: Ingrese un numero
+	la $a0, pedirHex 	#Se imprime: Ingrese un numero
 	li $v0, 4
 	syscall
 	
@@ -170,7 +172,7 @@ Case3: 	addi $s0, $zero, 3	#t0 = 3
 	syscall
 	
 	Case3_leerNumero:
-	la $a0, pedirNumero 	#Se imprime: Ingrese un numero
+	la $a0, pedirHexDec 	#Se imprime: Ingrese un numero
 	li $v0, 4
 	syscall
 	
