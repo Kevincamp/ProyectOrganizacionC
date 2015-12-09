@@ -19,12 +19,14 @@ pedirNumero:	.asciiz "\nIngrese un numero: "
 pedirHex:	.asciiz "\nIngrese un numero Hexadecimal (letras en minuscula): "
 pedirHexDec:	.asciiz "\nIngrese un numero (hexadecimales empiezan con 0x): "
 buffer:		.space  20 #space para leer un numero
-errorDato:	.asciiz "\nDato incorrecto"
+errorDato:	.asciiz "\n****Dato incorrecto****\n"
 bien:		.asciiz "\nbien"
+enDecimal:	.asciiz "\nEn decimal: "
 numdigitos:	.asciiz "\nnumero Digitos: "
 exponente:	.asciiz "\nexponente: "
 numero:		.asciiz "\nNumero: "
-acumulado:	.asciiz "\nLa Suma es: "
+acumulado:	.asciiz "\n>>> La Suma es: "
+salto:		.asciiz "\n "
 msgpow:		.asciiz "\npow: "
 .text
 main:	la $a0, saludo		# Imprimir el saludo usando syscall 4
@@ -109,6 +111,9 @@ Case1:	addi $s0, $zero, 1	#t0 = 1
 	add $a0,$s2,$zero
 	li $v0, 1
 	syscall
+	la $a0, salto
+	li $v0, 4
+	syscall
 	
 	j Menu			#regresar al Menu
 	
@@ -146,13 +151,19 @@ Case2:	addi $s0, $zero, 2	#s0 = 2
 	j Case2_leerNumero 	# pedir otro numero
 	
 	Case2_Guardar:
-	la $a0, bien
+	la $a0, enDecimal
 	li $v0,4
 	syscall
 	la $a0,buffer
 	jal stringHexadecimal
 	# acumular el numero
 	add $s2,$s2,$v0
+	
+	#imprimo un salto de linea
+	la $a0, salto
+	li $v0,4
+	syscall
+	
 	j Case2_leerNumero #pedir otro numero
 	
 	
@@ -162,6 +173,9 @@ Case2:	addi $s0, $zero, 2	#s0 = 2
 	syscall
 	add $a0,$s2,$zero
 	li $v0, 1
+	syscall
+	la $a0, salto
+	li $v0, 4
 	syscall
 	
 	j Menu			#regresar al Menu
@@ -205,9 +219,6 @@ Case3: 	addi $s0, $zero, 3	#t0 = 3
 	j Case3_leerNumero 	# pedir otro numero
 	
 	Case3_Guardar_Decimal:
-	la $a0, bien
-	li $v0,4
-	syscall
 	la $a0,buffer
 	jal stringDecimal
 	# acumular el numero
@@ -226,7 +237,7 @@ Case3: 	addi $s0, $zero, 3	#t0 = 3
 	j Case3_leerNumero 	# pedir otro numero
 	
 	Case3_Guardar_Hexadecimal:
-	la $a0, bien
+	la $a0, enDecimal
 	li $v0,4
 	syscall
 	la $a0,buffer
@@ -234,15 +245,24 @@ Case3: 	addi $s0, $zero, 3	#t0 = 3
 	jal stringHexadecimal
 	# acumular el numero
 	add $s2,$s2,$v0
+	la $a0, salto #imprimo un salto de linea
+	li $v0,4
+	syscall
+	
 	j Case3_leerNumero #pedir otro numero
 	
 	
 	Case3_Sumar: #si se ingresa un salto de linea se suman los numeros
-	la $a0, acumulado
+	la $a0, acumulado #imrpimo un mensaje
 	li $v0, 4
 	syscall
-	add $a0,$s2,$zero
+	
+	add $a0,$s2,$zero #imprimo el total
 	li $v0, 1
+	syscall
+	
+	la $a0, salto  #imprimo un salto de linea
+	li $v0, 4
 	syscall
 	
 	j Menu			#regresar al Menu
@@ -378,14 +398,7 @@ stringDecimal:#esta funcion recibe una cadena de caracter y retorna la cadena tr
 		subi $t2,$t2,1 # i--
 		j loop_StringDecimal
 	exit_StringDecimal:
-	#imprimo el mensaje digito
-	#la $a0,numero
-	#li $v0, 4
-	#syscall
-	#imprimo el numero
-	add $a0,$zero,$t3
-	addi $v0,$zero,1
-	syscall
+
 	add $v0,$zero,$t3
 	jr $ra
 	
