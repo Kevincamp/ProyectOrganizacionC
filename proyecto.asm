@@ -54,14 +54,22 @@ Menu:	la $a0, opuno		# Imprimir la opcion uno del menu usando syscall 4
 	li $v0, 4
 	syscall
 	
-	li $v0, 5		# Leer el numero entero
-	syscall
+	#se lee la opcion ingresada como una cadena de caracteres
+	li      $v0, 8		#leer string usando syscall 8
+    	la      $a0, buffer	#guardar el string en un buffer
+    	li      $a1, 20		#configurando el tamanio del buffer
+    	syscall
 	
-	add $s1, $v0, $zero	#copy the opcion in $t1
-	jal esNumeroDecimal
-	bne $v0, $zero, Default
+	la $a0, buffer		
+	jal esNumeroDecimal	#compruebo que es un numero decimal, devuelve cero si no es numero
+	beq $v0, $zero, Default #si no es un numero ir al case default
+	la $a0,buffer
+	jal stringDecimal	#lo comvierto a decimal
+	add $s1, $zero, $v0 	#se copia el numero en $s1, que sera usado para saber que opcion se escogio
 	
-Case1:	addi $s0, $zero, 1	#t0 = 1
+	
+Case1:	add $s2,$zero,$zero 	#encero el registro donde se acumula el resultado
+	addi $s0, $zero, 1	#t0 = 1
 	bne $s1, $s0, Case2	# si $t1 no es igual a 1 saltar al Case2
 	add $s2,$zero,$zero   	#$s2=0, acu=0
 	la $a0, opuno		# Imprimir la opcion uno del menu usando syscall 4
@@ -94,11 +102,9 @@ Case1:	addi $s0, $zero, 1	#t0 = 1
 	j Case1_leerNumero #pedir otro numero
 	
 	Case1_Guardar:
-	#la $a0, bien
-	#li $v0, 4
-	#syscall
+
 	la $a0,buffer
-	jal stringDecimal
+	jal stringDecimal #combierte a decimal
 	# acumular el numero
 	add $s2,$s2,$v0
 	j Case1_leerNumero #pedir otro numero
@@ -118,7 +124,8 @@ Case1:	addi $s0, $zero, 1	#t0 = 1
 	j Menu			#regresar al Menu
 	
 	
-Case2:	addi $s0, $zero, 2	#s0 = 2
+Case2:	add $s2,$zero,$zero 	#encero el registro donde se acumula el resultado
+	addi $s0, $zero, 2	#s0 = 2
 	bne $s1, $s0, Case3	# si $s1 no es igual a 2 saltar al Case3
 	add $s2, $zero,$zero 	#s2 = 0, acu = 0 
 	la $a0, opdos		# Imprimir la opcion dos del menu usando syscall 4
@@ -180,7 +187,8 @@ Case2:	addi $s0, $zero, 2	#s0 = 2
 	
 	j Menu			#regresar al Menu
 
-Case3: 	addi $s0, $zero, 3	#t0 = 3
+Case3: 	add $s2,$zero,$zero 	#encero el registro donde se acumula el resultado
+	addi $s0, $zero, 3	#t0 = 3
 	bne $s1, $s0, Salir	# si $t1 no es igual a 3 saltar a Salir
 	
 	la $a0, optres		# Imprimir la opcion tres del menu usando syscall 4
@@ -188,7 +196,7 @@ Case3: 	addi $s0, $zero, 3	#t0 = 3
 	syscall
 	
 	Case3_leerNumero:
-	la $a0, pedirHexDec 	#Se imprime: Ingrese un numero
+	la $a0, pedirHexDec 	#Se imprime: Ingrese un numero hxadecimal o decimal
 	li $v0, 4
 	syscall
 	
@@ -219,6 +227,7 @@ Case3: 	addi $s0, $zero, 3	#t0 = 3
 	j Case3_leerNumero 	# pedir otro numero
 	
 	Case3_Guardar_Decimal:
+
 	la $a0,buffer
 	jal stringDecimal
 	# acumular el numero
@@ -245,7 +254,8 @@ Case3: 	addi $s0, $zero, 3	#t0 = 3
 	jal stringHexadecimal
 	# acumular el numero
 	add $s2,$s2,$v0
-	la $a0, salto #imprimo un salto de linea
+	
+	la $a0, salto #imprime un enter
 	li $v0,4
 	syscall
 	
@@ -253,17 +263,17 @@ Case3: 	addi $s0, $zero, 3	#t0 = 3
 	
 	
 	Case3_Sumar: #si se ingresa un salto de linea se suman los numeros
-	la $a0, acumulado #imrpimo un mensaje
+	la $a0, acumulado
 	li $v0, 4
 	syscall
-	
-	add $a0,$s2,$zero #imprimo el total
+	add $a0,$s2,$zero
 	li $v0, 1
 	syscall
 	
-	la $a0, salto  #imprimo un salto de linea
+	la $a0, salto #imprime un enter
 	li $v0, 4
 	syscall
+
 	
 	j Menu			#regresar al Menu
 
@@ -563,11 +573,6 @@ stringHexadecimal:#esta funcion recibe una cadena de caracteres (formato hexadec
 		
 		
 	exit_StringHexadecimal:
-	#imprimo el mensaje digito
-	#la $a0,numero
-	#li $v0, 4
-	#syscall
-	#imprimo el numero
 	add $a0,$zero,$t3
 	addi $v0,$zero,1
 	syscall
